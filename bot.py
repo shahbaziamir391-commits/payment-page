@@ -3,14 +3,13 @@ import urllib.error
 import json
 import os
 import ssl
+import sys
 
-# ===== گرفتن اطلاعات از متغیرهای محیطی =====
 RIALIT_API_KEY = os.environ.get('RIALIT_API_KEY')
 GIST_TOKEN = os.environ.get('GIST_TOKEN')
 GIST_ID = os.environ.get('GIST_ID')
 CALLBACK_URL = os.environ.get('CALLBACK_URL')
 AMOUNT = int(os.environ.get('AMOUNT', 100000))
-# ========================================
 
 def create_new_link():
     url = "https://api.rialit.org/api/v1/send"
@@ -21,9 +20,18 @@ def create_new_link():
         with urllib.request.urlopen(req, timeout=10, context=context) as response:
             result = json.loads(response.read().decode('utf-8'))
             token = result.get('token')
-            return f"https://api.rialit.org/api/v1/redirect/{token}" if token else None
+            if token:
+                return f"https://api.rialit.org/api/v1/redirect/{token}"
+            else:
+                print("⚠️ توکن پیدا نشد:", result)
+                return None
+    except urllib.error.HTTPError as e:
+        print(f"❌ HTTP Error: {e.code} - {e.reason}")
+        sys.stdout.flush()
+        return None
     except Exception as e:
-        print("❌ خطا:", e)
+        print(f"❌ خطا: {e}")
+        sys.stdout.flush()
         return None
 
 def update_gist(link):
@@ -35,18 +43,24 @@ def update_gist(link):
         with urllib.request.urlopen(req, timeout=10, context=context) as response:
             return True
     except Exception as e:
-        print("❌ خطا در Gist:", e)
+        print(f"❌ خطا در به‌روزرسانی Gist: {e}")
+        sys.stdout.flush()
         return False
 
 def main():
+    print("⏳ در حال ساخت لینک جدید...")
+    sys.stdout.flush()
     new_link = create_new_link()
     if new_link:
+        print("✅ لینک ساخته شد:", new_link)
+        sys.stdout.flush()
         if update_gist(new_link):
-            print("✅ لینک جدید:", new_link)
+            print("✅ لینک در Gist ذخیره شد")
         else:
-            print("❌ لینک ساخته شد ولی در Gist ذخیره نشد")
+            print("❌ لینک در Gist ذخیره نشد")
     else:
-        print("❌ خطا در ساخت لینک")
+        print("❌ لینک ساخته نشد")
+    sys.stdout.flush()
 
 if __name__ == "__main__":
     main()
