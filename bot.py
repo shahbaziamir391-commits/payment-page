@@ -48,5 +48,5 @@ def main():
     else:
         print("❌ خطا در ساخت لینک")
 
-if name == "main":
+if __name__ == "__main__":
     main()
